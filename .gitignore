@@ -2,4 +2,4 @@ env/
 Data/.salt
 Data/vault01.csv
 Keys/vault.Key
-
+.DS_Store
