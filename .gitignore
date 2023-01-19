@@ -1,4 +1,6 @@
 env/
 Data/*
 Keys/*
+!Data/.gitkeep
+!Keys/.gitkeep
 .DS_Store
