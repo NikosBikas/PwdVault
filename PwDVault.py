@@ -151,8 +151,11 @@ def seach_for_salt():
                 print("Succes")
                 break
             else:
-                print("The master key does not match its confirmation. Please try again!")
-                input("")
+                input("The master key does not match its confirmation. Please try again!")
+                count+=1
+                if count>=3:
+                    print('More that 3 failed tries exiting...')
+                    exit()
                 continue          
     else:
         print("Salt was not found lets create it!")
@@ -175,11 +178,16 @@ def search_for_key():
 
 def search_for_vault():
     data_exists = os.path.exists('Data/vault01.csv')
-    if data_exists:
+    data_exists_2 =  os.path.exists('Data/vault02.csv')
+    if data_exists and data_exists_2:
         print('Data file found!')
     else:
         with open('Data/vault01.csv', mode='w') as csv_file:
             data_writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        # Second Vault for Notes
+        with open('Data/vault02.csv', mode='w') as csv_file_2:
+            data_writer_2 = csv.writer(csv_file_2, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        
         encrypt_data()
 
 def encrypt_data():
@@ -194,13 +202,22 @@ def encrypt_data():
     with open('Data/vault01.csv', 'rb') as file:
         original = file.read()
         
+    # opening the original file to encrypt
+    with open('Data/vault02.csv', 'rb') as file_2:
+        original_2 = file_2.read()
+        
     # encrypting the file
     encrypted = fernet.encrypt(original)
+    encrypted_2 = fernet.encrypt(original_2)
+
 
     # opening the file in write mode and
     # writing the encrypted data
     with open('Data/vault01.csv', 'wb') as encrypted_file:
         encrypted_file.write(encrypted)
+    
+    with open('Data/vault02.csv', 'wb') as encrypted_file_2:
+        encrypted_file_2.write(encrypted_2)
 
 
 def decrypt_data():   
@@ -214,14 +231,24 @@ def decrypt_data():
     # opening the encrypted file
     with open('Data/vault01.csv', 'rb') as enc_file:
         encrypted = enc_file.read()
-    
+        
+    # opening the encrypted file
+    with open('Data/vault02.csv', 'rb') as enc_file_2:
+        encrypted_2 = enc_file_2.read()
+        
     # decrypting the file
     decrypted = fernet.decrypt(encrypted)
+    decrypted_2 = fernet.decrypt(encrypted_2)
+
     
     # opening the file in write mode and
     # writing the decrypted data
     with open('Data/vault01.csv', 'wb') as dec_file:
         dec_file.write(decrypted)
+        
+    with open('Data/vault02.csv', 'wb') as dec_file_2:
+        dec_file_2.write(decrypted_2)
+        
     
 def delete_vault():
     print_banner("Delete Vault...")
@@ -230,8 +257,9 @@ def delete_vault():
         print('Removing Salt file...')
         os.remove('Data/.salt')
         print('Done!')
-        print('Removing Vault file...')
+        print('Removing Vault files...')
         os.remove('Data/vault01.csv')
+        os.remove('Data/vault02.csv')
         print('Done!')
         print('Removing Key...')
         os.remove('Keys/vault.key')
@@ -296,17 +324,54 @@ def random_password_ganerator():
 
 def view_notes():
     clear()
-    print_banner()
+    
+    print_banner("Data table...")
+    x = PrettyTable()
+    x.field_names = ['id','note']
+    decrypt_data()
+    with open('Data/vault02.csv') as f:
+        line = f.readline()
+        while line:
+            x.add_row(line.rstrip().split(','))
+            line = f.readline()
+    print(x)
+    encrypt_data()
+    print("") 
+    input("Press Enter to return at the Main Menu...")
+    return notes_manager_submenu()
+        
     print("Under Construction")
     input("Press any key to return at the menu")
     notes_manager_submenu()
 
 def add_new_note():
+    
+    
+    clear()     
+    print_banner("New Entry...")
+    print("")
+    id = None
+    note = input("Place your note here and press enter to save: ")
+    decrypt_data()
+    with open('Data/vault02.csv', mode='a') as csv_file:
+        data_writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        id = 1
+        for row in open("Data/vault02.csv"):
+            id+=1
+        data_writer.writerow([id,note])
+        csv_file.close()
+    encrypt_data()
+    clear()     
+    print_banner("New entry added succefuly! ")
+    input("Press Enter to return at the Main Menu...")
+    return notes_manager_submenu()
+    
     clear()
     print_banner()
     print("Under Construction")
     input("Press any key to return at the menu")
     notes_manager_submenu()
+
 # =======================
 #     MENUS FUNCTIONS
 # =======================
@@ -319,8 +384,8 @@ def main_menu():
     print ("")
     print ("1 Password Manager. ")
     print ("2 Notes Manager. ")
-    print ("3 Encrypt Data")
-    print ("4 Decrypt Data")
+    # print ("3 Encrypt Data")
+    # print ("4 Decrypt Data")
     print ("5 Erase Vault!")
     print ("0 Quit")
     print ("")
@@ -419,8 +484,8 @@ menu_actions = {
     'main_menu': main_menu,
     '1': password_manager_submenu,
     '2': notes_manager_submenu,
-    '3': encrypt_data,
-    '4': decrypt_data,
+    # '3': encrypt_data,
+    # '4': decrypt_data,
     '5': delete_vault,
     '0': exit,
 }
@@ -439,7 +504,7 @@ sub_menu_notes_actions = {
     '1': view_notes,
     '2': add_new_note,
     '3': main_menu,
-    '4': exit,
+    '0': exit,
 }
 
 
